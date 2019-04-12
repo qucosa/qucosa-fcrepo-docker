@@ -1,0 +1,58 @@
+FROM tomcat:8
+
+ARG fcrepo_version=3.8.1
+
+VOLUME ["/fcrepo3/data"]
+
+WORKDIR /apps
+
+# Downloading applications, making use of RUN cache for each file
+RUN wget -nv "https://github.com/fcrepo3/fcrepo/releases/download/v${fcrepo_version}/fcrepo-installer-${fcrepo_version}.jar"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-dcdisseminator/releases/download/v1.1.7/qucosa-fcrepo-dcdisseminator-1.1.7.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-epicurdisseminator/releases/download/v1.1.5/qucosa-epicurdisseminator-1.1.5.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-metsdisseminator/releases/download/v2.2.0/qucosa-metsdisseminator-2.2.0.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-winibwppn/releases/download/v1.1.0/qucosa-fcrepo-winibwppn-1.1.0.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-xmetadissplus/releases/download/v1.3.0/qucosa-fcrepo-xmetadissplus-1.3.0.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-zipdisseminator/releases/download/v1.0.2/qucosa-fcrepo-zipdisseminator-1.0.2.war"
+RUN wget -nv "https://github.com/qucosa/sword-fedora/releases/download/v1.6.4/sword-fedora-1.6.4.war"
+RUN wget -nv "https://github.com/qucosa/qucosa-sword-filehandler/releases/download/v1.4.5/qucosa-sword-filehandler-1.4.5.jar"
+
+COPY install.properties install.properties
+ENV FEDORA_HOME /fcrepo3
+RUN java -jar fcrepo-installer-${fcrepo_version}.jar install.properties && \
+    rm fcrepo-installer-${fcrepo_version}.jar install.properties
+
+COPY log4j.xml .
+COPY properties.xml .
+
+WORKDIR /usr/local/tomcat
+COPY tomcat-users.xml conf/
+RUN rm -rf webapp/examples webapp/docs webapp/host-manager
+
+WORKDIR /contentmodel
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-contentmodel/archive/v1.2.6.tar.gz" -O qucosa-fcrepo-contentmodel-1.2.6.tar.gz
+RUN tar -xf /contentmodel/qucosa-fcrepo-contentmodel-1.2.6.tar.gz
+RUN /usr/local/tomcat/bin/catalina.sh start && \
+    sleep 5 && \
+    curl -Ss --retry 10 --retry-delay 2 "http://localhost:8080/fedora/describe" -o /dev/null && \
+    for f in qucosa-fcrepo-contentmodel-1.2.6/objects/*xml; do \
+        curl -Ss -XPOST -ufedoraAdmin:fedoraAdmin -H'Content-Type:text/xml' \
+             --data-binary @$f \
+             "http://localhost:8080/fedora/objects/new?format=info:fedora/fedora-system:FOXML-1.1&ignoreMime=true"; echo; \
+    done
+RUN cd / && rm -rf /contentmodel
+
+WORKDIR /usr/local/tomcat/conf/Catalina/localhost
+COPY manager.xml .
+COPY dc.xml .
+COPY epicur.xml .
+COPY mets.xml .
+COPY saxon.war .
+COPY sword.xml .
+COPY winibwppn.xml .
+COPY xmetadissplus.xml .
+COPY zip.xml .
+
+WORKDIR /usr/local/tomcat
+
+CMD ["bin/catalina.sh", "run"]

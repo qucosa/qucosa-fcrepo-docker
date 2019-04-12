@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/sword" docBase="/apps/sword-fedora-1.6.4.war">
+    <Resources>
+        <PostResources
+            base="/apps/qucosa-sword-filehandler-1.4.5.jar"
+            className="org.apache.catalina.webresources.JarResourceSet"
+            webAppMount="/WEB-INF/classes"/>
+    </Resources>
+    <Parameter name="project.properties" value="/apps/properties.xml" override="false"/>
+    <Parameter name="log-config" value="/apps/log4j.xml" override="false"/>
+</Context>
