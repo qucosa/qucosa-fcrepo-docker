@@ -2,8 +2,6 @@ FROM tomcat:8
 
 ARG fcrepo_version=3.8.1
 
-VOLUME ["/fcrepo3/data"]
-
 WORKDIR /apps
 
 # Downloading applications, making use of RUN cache for each file
@@ -27,19 +25,20 @@ COPY properties.xml .
 
 WORKDIR /usr/local/tomcat
 COPY tomcat-users.xml conf/
-RUN rm -rf webapp/examples webapp/docs webapp/host-manager
+RUN rm -rf webapps/examples webapps/docs webapps/host-manager
 
 WORKDIR /contentmodel
 RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-contentmodel/archive/v1.2.6.tar.gz" -O qucosa-fcrepo-contentmodel-1.2.6.tar.gz
 RUN tar -xf /contentmodel/qucosa-fcrepo-contentmodel-1.2.6.tar.gz
-RUN /usr/local/tomcat/bin/catalina.sh start && \
-    sleep 5 && \
+RUN /usr/local/tomcat/bin/catalina.sh start && sleep 3 && \
     curl -Ss --retry 10 --retry-delay 2 "http://localhost:8080/fedora/describe" -o /dev/null && \
     for f in qucosa-fcrepo-contentmodel-1.2.6/objects/*xml; do \
         curl -Ss -XPOST -ufedoraAdmin:fedoraAdmin -H'Content-Type:text/xml' \
              --data-binary @$f \
-             "http://localhost:8080/fedora/objects/new?format=info:fedora/fedora-system:FOXML-1.1&ignoreMime=true"; echo; \
-    done
+             "http://localhost:8080/fedora/objects/new?format=info:fedora/fedora-system:FOXML-1.1&ignoreMime=true"; \
+             echo; \
+    done && \
+    /usr/local/tomcat/bin/catalina.sh stop && sleep 1
 RUN cd / && rm -rf /contentmodel
 
 WORKDIR /usr/local/tomcat/conf/Catalina/localhost
@@ -54,5 +53,7 @@ COPY xmetadissplus.xml .
 COPY zip.xml .
 
 WORKDIR /usr/local/tomcat
+
+VOLUME ["/fcrepo3/data"]
 
 CMD ["bin/catalina.sh", "run"]
