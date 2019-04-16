@@ -13,7 +13,7 @@ services:
             - "4712:9200"
             - "4713:9300"
 
-    qucosa-fcrepo:
+    fcrepo:
         build:
             context: .
             dockerfile: Dockerfile-Qucosa-Fcrepo3
@@ -25,7 +25,16 @@ services:
             - fcrepo3:/fcrepo3/data
         ports:
             - "4711:8080"
+        networks:
+            - default
+            - kitodopublication_default
+        external_links:
+            - kitodopublication_typo3-app_1:typo3
 
 volumes:
     elasticsearch:
     fcrepo3:
+
+networks:
+    kitodopublication_default:
+        external: true
