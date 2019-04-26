@@ -27,11 +27,12 @@ WORKDIR /usr/local/tomcat
 COPY tomcat-users.xml conf/
 RUN rm -rf webapps/examples webapps/docs webapps/host-manager
 
-WORKDIR /contentmodel
-RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-contentmodel/archive/v1.2.6.tar.gz" -O qucosa-fcrepo-contentmodel-1.2.6.tar.gz
-RUN tar -xf /contentmodel/qucosa-fcrepo-contentmodel-1.2.6.tar.gz
+WORKDIR /ingest
+RUN wget -nv "https://github.com/qucosa/qucosa-fcrepo-contentmodel/archive/v1.2.6.tar.gz" \
+         -O qucosa-fcrepo-contentmodel-1.2.6.tar.gz
+RUN tar -xf qucosa-fcrepo-contentmodel-1.2.6.tar.gz
 RUN /usr/local/tomcat/bin/catalina.sh start && sleep 3 && \
-    curl -Ss --retry 10 --retry-delay 2 "http://localhost:8080/fedora/describe" -o /dev/null && \
+    while ! curl -Ssf "http://localhost:8080/fedora/describe" -o /dev/null; do sleep 2; done && \
     for f in qucosa-fcrepo-contentmodel-1.2.6/objects/*xml; do \
         curl -Ss -XPOST -ufedoraAdmin:fedoraAdmin -H'Content-Type:text/xml' \
              --data-binary @$f \
@@ -39,7 +40,7 @@ RUN /usr/local/tomcat/bin/catalina.sh start && sleep 3 && \
              echo; \
     done && \
     /usr/local/tomcat/bin/catalina.sh stop && sleep 1
-RUN cd / && rm -rf /contentmodel
+RUN cd / && rm -rf /ingest
 
 WORKDIR /usr/local/tomcat/conf/Catalina/localhost
 COPY manager.xml .
@@ -55,5 +56,8 @@ COPY zip.xml .
 WORKDIR /usr/local/tomcat
 
 VOLUME ["/fcrepo3/data"]
+
+EXPOSE 8080
+EXPOSE 61616
 
 CMD ["bin/catalina.sh", "run"]

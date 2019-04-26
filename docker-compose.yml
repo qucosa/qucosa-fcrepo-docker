@@ -10,12 +10,13 @@ services:
             - elasticsearch:/elasticsearch/data
         ports:
             - "4712:9200"
-            - "4713:9300"
         networks:
             - default
             - kitodopublication_default
         depends_on:
             - fcrepo
+        environment:
+            WAIT_HOSTS: fcrepo:8080, fcrepo:61616
 
     fcrepo:
         build:
