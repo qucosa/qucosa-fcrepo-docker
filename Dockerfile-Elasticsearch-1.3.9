@@ -1,7 +1,11 @@
 FROM openjdk:8-jre
 
+EXPOSE 9200
+EXPOSE 9300
+
 ENV ES_PKG_NAME elasticsearch-1.3.9
 ENV PLUGIN_KOPF_VERSION 1.6.2
+ENV PLUGIN_RIVER_VERSION 1.1.1
 
 RUN \
   cd / && \
@@ -10,7 +14,14 @@ RUN \
   rm -f $ES_PKG_NAME.tar.gz && \
   mv /$ES_PKG_NAME /elasticsearch
 
-WORKDIR /elasticsearch/plugins/kopf
+WORKDIR /elasticsearch/plugins/fedora-river
+RUN \
+  wget -nv https://github.com/qucosa/elasticsearch-river-fedora/releases/download/v$PLUGIN_RIVER_VERSION/fedora-river-$PLUGIN_RIVER_VERSION.zip \
+       -O fedora-river-$PLUGIN_RIVER_VERSION.zip && \
+  unzip fedora-river-$PLUGIN_RIVER_VERSION.zip && \
+  rm fedora-river-$PLUGIN_RIVER_VERSION.zip
+
+WORKDIR /elasticsearch/plugins
 RUN \
   wget -nv https://github.com/lmenezes/elasticsearch-kopf/archive/v$PLUGIN_KOPF_VERSION.tar.gz \
        -O elasticsearch-kopf-$PLUGIN_KOPF_VERSION.tar.gz && \
@@ -18,9 +29,21 @@ RUN \
   rm elasticsearch-kopf-$PLUGIN_KOPF_VERSION.tar.gz && \
   mv elasticsearch-kopf-$PLUGIN_KOPF_VERSION kopf
 
+WORKDIR /ingest
+COPY fedora-river.json .
+RUN \
+    /elasticsearch/bin/elasticsearch -d -p elasticsearch.pid && \
+    while ! curl -Ssf "http://localhost:9200/" -o /dev/null; do sleep 2; done && \
+    curl -v "http://localhost:9200/_river/fedora/_meta" \
+         -H'Content-Type:application/json' \
+         --data-binary @fedora-river.json && \
+    kill `cat elasticsearch.pid` && \
+    sleep 3
+RUN cd / && rm -rf /ingest
+
+WORKDIR /elasticsearch
+
 VOLUME ["/elasticsearch/data"]
 
 CMD ["/elasticsearch/bin/elasticsearch"]
 
-EXPOSE 9200
-EXPOSE 9300

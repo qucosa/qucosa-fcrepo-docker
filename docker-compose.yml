@@ -6,12 +6,16 @@ services:
             context: .
             dockerfile: Dockerfile-Elasticsearch-1.3.9
         image: elasticsearch:1.3.9
-        hostname: elasticsearch
         volumes:
             - elasticsearch:/elasticsearch/data
         ports:
             - "4712:9200"
             - "4713:9300"
+        networks:
+            - default
+            - kitodopublication_default
+        depends_on:
+            - fcrepo
 
     fcrepo:
         build:
@@ -20,7 +24,6 @@ services:
             args:
                 fcrepo_version: 3.8.1
         image: qucosa-fcrepo:3.8.1
-        hostname: fcrepo3
         volumes:
             - fcrepo3:/fcrepo3/data
         ports:
