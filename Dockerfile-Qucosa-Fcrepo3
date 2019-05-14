@@ -25,6 +25,7 @@ COPY properties.xml .
 
 WORKDIR /usr/local/tomcat
 COPY tomcat-users.xml conf/
+COPY saxon.war webapps/
 RUN rm -rf webapps/examples webapps/docs webapps/host-manager
 
 WORKDIR /ingest
