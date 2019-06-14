@@ -11,8 +11,8 @@ services:
         ports:
             - "4712:9200"
         networks:
-            - default
-            - kitodopublication_default
+            - backend
+            - kitodopublication_frontend
         depends_on:
             - fcrepo
         environment:
@@ -30,8 +30,8 @@ services:
         ports:
             - "4711:8080"
         networks:
-            - default
-            - kitodopublication_default
+            - backend
+            - kitodopublication_frontend
         external_links:
             - kitodopublication_typo3-app_1:typo3
 
@@ -40,5 +40,6 @@ volumes:
     fcrepo3:
 
 networks:
-    kitodopublication_default:
+    backend:
+    kitodopublication_frontend:
         external: true
