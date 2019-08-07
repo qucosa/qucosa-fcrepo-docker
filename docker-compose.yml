@@ -32,8 +32,6 @@ services:
         networks:
             - backend
             - kitodopublication_frontend
-        external_links:
-            - kitodopublication_typo3-app_1:typo3
 
 volumes:
     elasticsearch:
