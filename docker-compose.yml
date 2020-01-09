@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 
 services:
     elasticsearch:
@@ -12,7 +12,7 @@ services:
             - "4712:9200"
         networks:
             - backend
-            - kitodopublication_frontend
+            - frontend
         depends_on:
             - fcrepo
         environment:
@@ -31,7 +31,7 @@ services:
             - "4711:8080"
         networks:
             - backend
-            - kitodopublication_frontend
+            - frontend
 
 volumes:
     elasticsearch:
@@ -39,5 +39,7 @@ volumes:
 
 networks:
     backend:
-    kitodopublication_frontend:
-        external: true
+        name: qucosa_backend
+    frontend:
+        external:
+            name: kitodopublication_frontend
